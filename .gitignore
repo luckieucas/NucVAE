@@ -1,0 +1,8 @@
+outputs/
+__pycache__/
+log/
+experiments/
+models_dir/
+tmp/
+wandb/
+

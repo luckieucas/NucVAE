@@ -1,0 +1,19 @@
+data_dir: "/mmfs1/data/liupen/project/dataset/nuclei/long_2009/train/vae_instance_masks_size32"
+image_dir: "/mmfs1/data/liupen/project/dataset/nuclei/long_2009/train/vae_instance_images_size32"
+log_dir: "/mmfs1/data/liupen/project/NucleiVae/expriments/L9_DE_VAE_with_augmentation_drop08" 
+val_dir: "/mmfs1/data/liupen/project/dataset/nuclei/long_2009/val/masks"
+val_image_dir: "/mmfs1/data/liupen/project/dataset/nuclei/long_2009/val/images"
+target_shape: [32, 32, 32]
+ignore_label_zero: True
+min_foreground_pixels: 300
+batch_size: 64
+learning_rate: 0.001
+num_epochs: 2000
+phase1_epochs: 100
+phase2_epochs: 300
+latent_dim: 16
+base_channel: 16
+num_embeddings: 128
+max_dropout: 0.8
+beta: 1.0
+device: "cuda"

@@ -1,0 +1,11 @@
+data_dir: "/mmfs1/data/liupen/project/dataset/nuclei/long_2009/train/masks"
+log_dir: "/mmfs1/data/liupen/project/NucleiVae/expriments/L9"
+target_shape: [32, 32, 64]
+ignore_label_zero: True
+num_epochs: 100
+batch_size: 16
+learning_rate: 0.001
+num_epochs: 20000
+latent_dim: 16
+base_channel: 16
+beta: 1.0
