@@ -10,22 +10,22 @@ from models import VAE3D, DualEncoderVAE3D # For standard VAE; dual encoder mode
 
 
 def load_tiff_as_numpy(filepath):
-    """加载 3D TIFF 文件为 NumPy 数组"""
+    """Load 3D TIFF file as a NumPy array"""
     return tifffile.imread(filepath).astype(np.int32)
 
 def compute_log_likelihood(vae_model, x, num_samples=100):
     """
-    使用重要性采样估计单个 3D 实例的 log-likelihood
+    Estimate log-likelihood of a single 3D instance using importance sampling
     Args:
-        vae_model: 预训练的 VAE 模型
-        x (torch.Tensor): 输入张量，形状为 (1, D, H, W)
-        num_samples (int): Monte Carlo 采样次数
+        vae_model: Pretrained VAE model
+        x (torch.Tensor): Input tensor of shape (1, D, H, W)
+        num_samples (int): Number of Monte Carlo samples
     Returns:
-        float: 估计的 log-likelihood
+        float: Estimated log-likelihood
     """
     vae_model.eval()
     with torch.no_grad():
-        # 增加 batch 和 channel 维度，变为 (1,1,D,H,W)
+        # Add batch and channel dimensions -> (1,1,D,H,W)
         x = x.unsqueeze(0)
         mu, logvar = vae_model.encode_mask(x)
         z_samples = []
@@ -47,25 +47,25 @@ def compute_log_likelihood(vae_model, x, num_samples=100):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_folder", type=str, required=True,
-                        help="包含已裁剪为 32x32x32 的实例 TIFF 文件的文件夹")
+                        help="Folder containing 32x32x32 instance TIFF files")
     parser.add_argument("--model_path", type=str, required=True,
-                        help="预训练 VAE 模型的路径")
+                        help="Path to the pretrained VAE model")
     parser.add_argument("--output_txt", type=str, required=True,
-                        help="输出 log-likelihood 结果的 txt 文件路径")
+                        help="Path to save the log-likelihood results as a txt file")
     parser.add_argument("--num_samples", type=int, default=100,
-                        help="Monte Carlo 采样次数")
+                        help="Number of Monte Carlo samples")
     parser.add_argument("--device", type=str, default="cuda",
-                        help="推理使用的设备，例如 cuda 或 cpu")
+                        help="Device for inference, e.g., cuda or cpu")
     parser.add_argument("--latent_dim", type=int, default=16,
-                        help="VAE 模型的 latent 维度")
+                        help="Latent dimension of the VAE model")
     parser.add_argument("--base_channel", type=int, default=16,
-                        help="VAE 模型的基础通道数")
+                        help="Base number of channels in the VAE model")
     args = parser.parse_args()
 
     input_folder = Path(args.input_folder)
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
-    # 加载预训练模型
+    # Load pretrained model
     model = DualEncoderVAE3D(
             mask_in_channels=1,
             img_in_channels=2,
@@ -74,33 +74,33 @@ def main():
         ).to(device)
     state_dict = torch.load(args.model_path, map_location=device)
     model.load_state_dict(state_dict)
-    print("模型加载成功。")
+    print("Model loaded successfully.")
 
-    # 获取所有实例文件
+    # Get all instance files
     instance_files = list(input_folder.glob("*.tif")) + list(input_folder.glob("*.tiff"))
     if not instance_files:
-        print("未在输入文件夹中找到实例文件。")
+        print("No instance files found in the input folder.")
         return
 
-    # 计算每个实例的 log-likelihood，存储为 (filename, loglikelihood) 对
+    # Compute log-likelihood for each instance, store as (filename, loglikelihood) pair
     results = []
     for file in instance_files:
         instance = load_tiff_as_numpy(file)
-        # 假设每个实例尺寸为 32x32x32，转换为 tensor，形状为 (1, D, H, W)
+        # Assume each instance is 32x32x32, convert to tensor of shape (1, D, H, W)
         instance_tensor = torch.from_numpy(instance).type(torch.float32).unsqueeze(0).to(device)
         print(f"instance_tensor shape: {instance_tensor.shape}")
         ll = compute_log_likelihood(model, instance_tensor, num_samples=args.num_samples)
         results.append((file.name, ll))
-        print(f"处理 {file.name}：log-likelihood = {ll:.4f}")
+        print(f"Processing {file.name}: log-likelihood = {ll:.4f}")
 
-    # 按 log-likelihood 从小到大排序
+    # Sort results by log-likelihood in ascending order
     results.sort(key=lambda x: x[1])
 
-    # 将结果写入 txt 文件
+    # Write results to txt file
     with open(args.output_txt, "w") as out_file:
         for filename, ll in results:
             out_file.write(f"{filename}\t{ll:.4f}\n")
-    print("所有结果已按 log-likelihood 从小到大排列，并保存至", args.output_txt)
+    print("All results have been sorted by log-likelihood and saved to", args.output_txt)
 
 if __name__ == "__main__":
     main()

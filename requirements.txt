@@ -1,0 +1,11 @@
+connectomics==0.0.3
+dataset==1.6.2
+dotmap==1.3.30
+numpy==2.2.4
+PyYAML==6.0.2
+scipy==1.15.2
+skimage==0.0
+tifffile==2024.8.30
+torch==2.6.0
+torchio==0.20.6
+tqdm==4.67.1
